@@ -98,21 +98,20 @@ class OverlayService : Service() {
 
     // 手势检测器：可靠区分单击/双击/长按
     private var gestureDetector: GestureDetector? = null
-
     private fun createTouchListener(): View.OnTouchListener {
-        gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             // 单击
-            override fun onSingleTapUp(e: MotionEvent?): Boolean {
+            override fun onSingleTapUp(e: MotionEvent): Boolean {
                 registerTap()
                 return true
             }
             // 双击
-            override fun onDoubleTap(e: MotionEvent?): Boolean {
+            override fun onDoubleTap(e: MotionEvent): Boolean {
                 onDoubleTap()
                 return true
             }
             // 长按
-            override fun onLongPress(e: MotionEvent?) {
+            override fun onLongPress(e: MotionEvent) {
                 onLongPress()
             }
         })
