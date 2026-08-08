@@ -152,6 +152,30 @@ body {
     onAppChanged: function(pkg) {
       var msg = phrases.app[pkg] || '';
       if (msg) showBubble(msg);
+    },
+    // 连击递进：第 3/5/8 次
+    onCombo: function(n) {
+      lastInteraction = Date.now();
+      pet.classList.remove('cat-angry');
+      if (n === 3) {
+        showBubble('连点三下？？', 'pink');
+        pet.animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}], {duration:300});
+      } else if (n === 5) {
+        showBubble('你到底要干嘛！', 'red');
+        pet.animate([{transform:'scale(1) rotate(0)'},{transform:'scale(1.2) rotate(-20deg)'},{transform:'scale(1) rotate(3deg)'},{transform:'scale(1)'}], {duration:400});
+      } else if (n === 8) {
+        showBubble('我生气了！！', 'red');
+        pet.classList.add('cat-angry');
+        setTimeout(function(){ pet.classList.remove('cat-angry'); }, 1500);
+      }
+    },
+    // 被拖拽/甩出后爬回
+    onReleased: function(x, y, speed, vx, vy) {
+      lastInteraction = Date.now();
+      var flung = speed > 1200;
+      showBubble(flung ? '呜哇！' : '哼，自己会走', flung ? 'red' : 'white');
+      var deg = (vx>0?20:-20);
+      pet.animate([{transform:'scale(1) rotate(0)'},{transform:'scale(0.8) rotate('+deg+'deg) translateX('+(vx>0?6:-6)+'px)'},{transform:'scale(1) rotate(0)'}], {duration:400});
     }
   };
   setInterval(function() {
