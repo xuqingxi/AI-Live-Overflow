@@ -84,7 +84,6 @@ class OverlayService : Service() {
     }
 
     // ========== GESTURE ==========
-
     private var initialX = 0
     private var initialY = 0
     private var initialTouchX = 0f
@@ -97,8 +96,29 @@ class OverlayService : Service() {
     private var lastVelocityY = 0f
     private var pendingFling = false
 
+    // 手势检测器：可靠区分单击/双击/长按
+    private var gestureDetector: GestureDetector? = null
+
     private fun createTouchListener(): View.OnTouchListener {
+        gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+            // 单击
+            override fun onSingleTapUp(e: MotionEvent?): Boolean {
+                registerTap()
+                return true
+            }
+            // 双击
+            override fun onDoubleTap(e: MotionEvent?): Boolean {
+                onDoubleTap()
+                return true
+            }
+            // 长按
+            override fun onLongPress(e: MotionEvent?) {
+                onLongPress()
+            }
+        })
+
         return View.OnTouchListener { _, event ->
+            gestureDetector?.onTouchEvent(event)
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     initialX = params?.x ?: 0
@@ -114,31 +134,28 @@ class OverlayService : Service() {
                     val dy = (event.rawY - initialTouchY).toInt()
                     lastVelocityX = event.rawX - initialTouchX
                     lastVelocityY = event.rawY - initialTouchY
-                    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                    if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
                         hasMoved = true
                         params?.x = initialX + dx
                         params?.y = initialY + dy
-                        windowManager?.updateViewLayout(overlayView, params)
+                        if (windowManager != null && overlayView != null) {
+                            windowManager!!.updateViewLayout(overlayView, params)
+                        }
                     }
                     true
                 }
                 MotionEvent.ACTION_UP -> {
                     val elapsed = System.currentTimeMillis() - touchStartTime
                     if (hasMoved) {
-                        // fling / 拖拽后：记录速度，交给 JS 决定是否甩出，随后爬回
                         val flingVx = lastVelocityX
                         val flingVy = lastVelocityY
                         val speed = Math.sqrt((flingVx*flingVx + flingVy*flingVy).toDouble())
                         pendingFling = speed > 1200.0
                         returnHome(speed, flingVx.toInt(), flingVy.toInt())
                     } else {
-                        when {
-                            elapsed > 600 -> onLongPress()
-                            System.currentTimeMillis() - lastTapTime < 300 -> onDoubleTap()
-                            else -> {
-                                lastTapTime = System.currentTimeMillis()
-                                registerTap()
-                            }
+                        // 单击/双击/长按交给 gestureDetector 处理
+                        if (elapsed > 600) {
+                            onLongPress()
                         }
                     }
                     true
@@ -152,7 +169,6 @@ class OverlayService : Service() {
     private fun registerTap() {
         val now = System.currentTimeMillis()
         tapTimes.add(now)
-        // 清理窗口外的旧时间戳
         while (tapTimes.isNotEmpty() && now - tapTimes[0] > 2000) tapTimes.removeAt(0)
         val n = tapTimes.size
         when {
@@ -162,34 +178,62 @@ class OverlayService : Service() {
             else -> onTap()
         }
     }
+
     // 松手后：Fling 甩出或普通拖拽，kotlin 驱动窗口移动（甩出+走回动画）
     private fun returnHome(speed: Double, vx: Int, vy: Int) {
         val wm = windowManager ?: return
         val curX = params?.x ?: 0
         val curY = params?.y ?: 0
         val scrW = resources.displayMetrics.widthPixels
+        val scrH = resources.displayMetrics.heightPixels
         val winW = dpToPx(PET_SIZE_DP)
+        val winH = dpToPx(PET_SIZE_DP)
         // 锚点：屏幕右侧内侧
         val homeX = scrW - winW - dpToPx(24)
-        // Y 保持当前位置，不强行回顶
-        val homeY = curY
-        // 甩出偏移：Fling 时沿速度方向多滑一段，制造被甩出去的感觉
-        val flungX = if (pendingFling) { curX + (vx * 2) } else curX
-        val flungY = if (pendingFling) { curY + (vy * 2) } else curY
-        // 阶段一：甩出去（50ms）→ 阶段二：爬回锚点（500ms 缓动）
-        val startX = if (pendingFling) flungX else curX
-        val startY = if (pendingFling) flungY else curY
-        val anim = android.animation.ValueAnimator.ofFloat(0f, 1f)
-        anim.duration = if (pendingFling) 700L else 500L
-        anim.addUpdateListener { a ->
+        // Y 保持在屏幕内
+        val homeY = Math.max(dpToPx(10), Math.min(scrH - winH - dpToPx(40), curY))
+
+        // 甩出动画：沿速度方向快速滑出，能越过屏幕边缘（不做 clamp，可直接跑出可见区）
+        val flingOut = android.animation.ValueAnimator.ofFloat(0f, 1f)
+        flingOut.duration = if (pendingFling) 260L else 200L
+        flingOut.addUpdateListener { a ->
             val t = a.animatedValue as Float
-            // 缓动：先快后慢，像爬回去
-            val eased = 1 - ((1 - t) * (1 - t))
-            params?.x = (startX + (homeX - startX) * eased).toInt()
-            params?.y = (startY + (homeY - startY) * eased).toInt()
-            wm.updateViewLayout(overlayView, params)
+            params?.x = (curX + (vx * 1.5f * t)).toInt()
+            params?.y = (curY + (vy * 1.5f * t)).toInt()
+            if (wm != null && params != null) wm.updateViewLayout(overlayView, params)
         }
-        anim.start()
+        flingOut.addListener(object : android.animation.AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                val fx = params?.x ?: curX
+                val fy = params?.y ?: curY
+                // 从甩出点爬回锚点，走很长的路，像走路回来
+                val ret = android.animation.ValueAnimator.ofFloat(0f, 1f)
+                ret.duration = if (pendingFling) 2600L else 800L
+                ret.addUpdateListener { a ->
+                    val t = a.animatedValue as Float
+                    val eased = 1 - ((1 - t) * (1 - t))
+                    params?.x = (fx + (homeX - fx) * eased).toInt()
+                    params?.y = (fy + (homeY - fy) * eased).toInt()
+                    if (wm != null && params != null) wm.updateViewLayout(overlayView, params)
+                }
+                ret.start()
+            }
+        })
+        if (pendingFling) {
+            flingOut.start()
+        } else {
+            // 普通拖拽：直接从当前位置爬回
+            val ret = android.animation.ValueAnimator.ofFloat(0f, 1f)
+            ret.duration = 800L
+            ret.addUpdateListener { a ->
+                val t = a.animatedValue as Float
+                val eased = 1 - ((1 - t) * (1 - t))
+                params?.x = (curX + (homeX - curX) * eased).toInt()
+                params?.y = (curY + (homeY - curY) * eased).toInt()
+                if (wm != null && params != null) wm.updateViewLayout(overlayView, params)
+            }
+            ret.start()
+        }
         // 通知 JS 做表情/气泡
         overlayView?.evaluateJavascript(
             "window.petEngine && window.petEngine.onReleased(${curX}, ${curY}, ${speed}, $vx, $vy)", null
@@ -205,7 +249,6 @@ class OverlayService : Service() {
         overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onDoubleTap()", null)
         supabaseSync?.logGesture("double_tap", params?.x ?: 0, params?.y ?: 0)
     }
-
     private fun onLongPress() {
         overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onLongPress()", null)
         supabaseSync?.logGesture("long_press", params?.x ?: 0, params?.y ?: 0)
