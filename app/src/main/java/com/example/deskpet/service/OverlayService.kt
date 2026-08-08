@@ -92,6 +92,10 @@ class OverlayService : Service() {
     private var lastTapTime = 0L
     private var touchStartTime = 0L
     private var hasMoved = false
+    private val tapTimes = mutableListOf<Long>()   // 2s 窗口连击计数
+    private var lastVelocityX = 0f
+    private var lastVelocityY = 0f
+    private var pendingFling = false
 
     private fun createTouchListener(): View.OnTouchListener {
         return View.OnTouchListener { _, event ->
@@ -108,6 +112,8 @@ class OverlayService : Service() {
                 MotionEvent.ACTION_MOVE -> {
                     val dx = (event.rawX - initialTouchX).toInt()
                     val dy = (event.rawY - initialTouchY).toInt()
+                    lastVelocityX = event.rawX - initialTouchX
+                    lastVelocityY = event.rawY - initialTouchY
                     if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
                         hasMoved = true
                         params?.x = initialX + dx
@@ -118,13 +124,20 @@ class OverlayService : Service() {
                 }
                 MotionEvent.ACTION_UP -> {
                     val elapsed = System.currentTimeMillis() - touchStartTime
-                    if (!hasMoved) {
+                    if (hasMoved) {
+                        // fling / 拖拽后：记录速度，交给 JS 决定是否甩出，随后爬回
+                        val flingVx = lastVelocityX
+                        val flingVy = lastVelocityY
+                        val speed = Math.sqrt((flingVx*flingVx + flingVy*flingVy).toDouble())
+                        pendingFling = speed > 1200.0
+                        returnHome(speed, flingVx.toInt(), flingVy.toInt())
+                    } else {
                         when {
                             elapsed > 600 -> onLongPress()
                             System.currentTimeMillis() - lastTapTime < 300 -> onDoubleTap()
                             else -> {
                                 lastTapTime = System.currentTimeMillis()
-                                onTap()
+                                registerTap()
                             }
                         }
                     }
@@ -135,6 +148,54 @@ class OverlayService : Service() {
         }
     }
 
+    // 连击计数：2 秒窗口内第 3/5/8 次触发递进
+    private fun registerTap() {
+        val now = System.currentTimeMillis()
+        tapTimes.add(now)
+        // 清理窗口外的旧时间戳
+        while (tapTimes.isNotEmpty() && now - tapTimes[0] > 2000) tapTimes.removeAt(0)
+        val n = tapTimes.size
+        when {
+            n == 3 -> overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onCombo(3)", null)
+            n == 5 -> overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onCombo(5)", null)
+            n == 8 -> overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onCombo(8)", null)
+            else -> onTap()
+        }
+    }
+    // 松手后：Fling 甩出或普通拖拽，kotlin 驱动窗口移动（甩出+走回动画）
+    private fun returnHome(speed: Double, vx: Int, vy: Int) {
+        val wm = windowManager ?: return
+        val curX = params?.x ?: 0
+        val curY = params?.y ?: 0
+        val scrW = resources.displayMetrics.widthPixels
+        val winW = dpToPx(PET_SIZE_DP)
+        // 锚点：屏幕右侧内侧
+        val homeX = scrW - winW - dpToPx(24)
+        // Y 保持当前位置，不强行回顶
+        val homeY = curY
+        // 甩出偏移：Fling 时沿速度方向多滑一段，制造被甩出去的感觉
+        val flungX = if (pendingFling) { curX + (vx * 2) } else curX
+        val flungY = if (pendingFling) { curY + (vy * 2) } else curY
+        // 阶段一：甩出去（50ms）→ 阶段二：爬回锚点（500ms 缓动）
+        val startX = if (pendingFling) flungX else curX
+        val startY = if (pendingFling) flungY else curY
+        val anim = android.animation.ValueAnimator.ofFloat(0f, 1f)
+        anim.duration = if (pendingFling) 700L else 500L
+        anim.addUpdateListener { a ->
+            val t = a.animatedValue as Float
+            // 缓动：先快后慢，像爬回去
+            val eased = 1 - ((1 - t) * (1 - t))
+            params?.x = (startX + (homeX - startX) * eased).toInt()
+            params?.y = (startY + (homeY - startY) * eased).toInt()
+            wm.updateViewLayout(overlayView, params)
+        }
+        anim.start()
+        // 通知 JS 做表情/气泡
+        overlayView?.evaluateJavascript(
+            "window.petEngine && window.petEngine.onReleased(${curX}, ${curY}, ${speed}, $vx, $vy)", null
+        )
+        supabaseSync?.logGesture(if (pendingFling) "fling" else "drag", curX, curY)
+    }
     private fun onTap() {
         overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onTap()", null)
         supabaseSync?.logGesture("tap", params?.x ?: 0, params?.y ?: 0)
