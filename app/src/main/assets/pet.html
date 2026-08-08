@@ -32,19 +32,72 @@ body {
 .bubble.pink { background: #ff69b4; color: #fff; }
 .bubble.red { background: #ff4444; color: #fff; }
 .bubble.green { background: #4CAF50; color: #fff; }
+/* ===== crow idle animations ===== */
+.pet { animation: breathe 3s ease-in-out infinite; }
+@keyframes breathe {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.03,0.98); }
+}
+.tail { transform-origin: 30% 40%; animation: tailsway 4s ease-in-out infinite; }
+@keyframes tailsway {
+  0%,100% { transform: rotate(0deg); }
+  50% { transform: rotate(-6deg); }
+}
+.wing { transform-origin: 80% 70%; animation: wingflap 2.4s ease-in-out infinite; }
+@keyframes wingflap {
+  0%,100% { transform: rotate(0deg); }
+  50% { transform: rotate(-10deg); }
+}
+.pet.tail-fanned .tail { animation: talfan 0.5s ease-out forwards; }
+@keyframes talfan {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-14deg) scaleY(1.4); }
+}
+.pet.tail-fanned .tail rect { fill: #6a5acd; }
+.pet.tail-fanned .tail rect:nth-child(odd) { fill: #4a4a8a; }
 </style>
 </head>
 <body>
 <div class="bubble" id="bubble"></div>
 <div class="pet" id="pet">
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="55" r="35" fill="#FFB6C1" stroke="#E8909A" stroke-width="2"/>
-    <circle cx="50" cy="55" r="30" fill="#FFC8D6"/>
-    <circle cx="38" cy="48" r="5" fill="#333"/>
-    <circle cx="62" cy="48" r="5" fill="#333"/>
-    <ellipse id="mouth" cx="50" cy="62" rx="8" ry="4" fill="#E8909A"/>
-    <circle cx="30" cy="38" r="6" fill="#FFB6C1" stroke="#E8909A" stroke-width="1.5"/>
-    <circle cx="70" cy="38" r="6" fill="#FFB6C1" stroke="#E8909A" stroke-width="1.5"/>
+  <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+    <!-- tail -->
+    <g class="tail">
+      <rect x="14" y="52" width="10" height="4" fill="#2a2a3a"/>
+      <rect x="12" y="60" width="12" height="4" fill="#221f3f"/>
+      <rect x="16" y="68" width="10" height="4" fill="#1d1b36"/>
+      <rect x="18" y="76" width="8" height="4" fill="#2a2a3a"/>
+      <rect x="22" y="84" width="6" height="4" fill="#1d1b36"/>
+    </g>
+    <!-- body -->
+    <rect x="34" y="58" width="52" height="44" rx="6" fill="#1a1a24"/>
+    <rect x="40" y="56" width="40" height="6" fill="#4a4a8a"/>
+    <rect x="46" y="54" width="28" height="4" fill="#6a5acd"/>
+    <!-- wing -->
+    <g class="wing">
+      <rect x="68" y="64" width="22" height="26" fill="#12121c"/>
+      <rect x="72" y="66" width="16" height="4" fill="#3a3a6a"/>
+      <rect x="74" y="72" width="14" height="4" fill="#2a2a4a"/>
+      <rect x="76" y="78" width="12" height="4" fill="#22223c"/>
+    </g>
+    <!-- chest -->
+    <rect x="36" y="92" width="46" height="10" rx="4" fill="#242440"/>
+    <!-- head -->
+    <rect x="44" y="16" width="40" height="40" rx="8" fill="#1a1a24"/>
+    <rect x="48" y="12" width="30" height="6" fill="#6a5acd"/>
+    <!-- eyes -->
+    <g class="eye">
+      <rect x="52" y="30" width="6" height="8" fill="#e6a915"/>
+      <rect x="55" y="32" width="3" height="4" fill="#1a1a24"/>
+    </g>
+    <g class="eye">
+      <rect x="66" y="30" width="6" height="8" fill="#e6a915"/>
+      <rect x="69" y="32" width="3" height="4" fill="#1a1a24"/>
+    </g>
+    <!-- beak -->
+    <rect x="58" y="40" width="12" height="6" rx="2" fill="#d8850f"/>
+    <!-- blink overlay -->
+    <rect class="blink" x="50" y="30" width="26" height="8" fill="#1a1a24" opacity="0"/>
   </svg>
 </div>
 <script>
@@ -108,13 +161,25 @@ body {
       if (msg) showBubble(msg);
     }
   };
-
   setInterval(function() {
     if (Date.now() - lastInteraction > 300000) {
       showBubble(randomPick(phrases.idle));
       lastInteraction = Date.now();
     }
   }, 60000);
+
+  // ===== blink animation =====
+  var blink = document.querySelector('.blink');
+  setInterval(function() { blink.setAttribute('opacity', '1'); }, 3800);
+  setInterval(function() { blink.setAttribute('opacity', '0'); }, 3950);
+
+  // ===== angry / tail-fan feedback =====
+  function fanTail() {
+    pet.classList.add('tail-fanned');
+    showBubble('气死我了', 'red');
+    setTimeout(function() { pet.classList.remove('tail-fanned'); }, 1500);
+  }
+
 
   // poll supabase for state changes
   var SUPABASE_URL = 'https://your-project.supabase.co';
