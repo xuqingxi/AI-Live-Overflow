@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  width: 100vw; height: 100vh; overflow: hidden;
+  font-family: sans-serif;
+}
+.pet {
+  width: 130px; height: 130px;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s ease;
+  user-select: none;
+}
+.pet svg { width: 100%; height: 100%; }
+.bubble {
+  position: absolute; top: -38px; left: 50%;
+  transform: translateX(-50%);
+  background: #fff; border-radius: 12px;
+  padding: 4px 10px; font-size: 13px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.bubble.show { opacity: 1; }
+.bubble.pink { background: #ff69b4; color: #fff; }
+.bubble.red { background: #ff4444; color: #fff; }
+.bubble.green { background: #4CAF50; color: #fff; }
+</style>
+</head>
+<body>
+<div class="bubble" id="bubble"></div>
+<div class="pet" id="pet">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="55" r="35" fill="#FFB6C1" stroke="#E8909A" stroke-width="2"/>
+    <circle cx="50" cy="55" r="30" fill="#FFC8D6"/>
+    <circle cx="38" cy="48" r="5" fill="#333"/>
+    <circle cx="62" cy="48" r="5" fill="#333"/>
+    <ellipse id="mouth" cx="50" cy="62" rx="8" ry="4" fill="#E8909A"/>
+    <circle cx="30" cy="38" r="6" fill="#FFB6C1" stroke="#E8909A" stroke-width="1.5"/>
+    <circle cx="70" cy="38" r="6" fill="#FFB6C1" stroke="#E8909A" stroke-width="1.5"/>
+  </svg>
+</div>
+<script>
+(function() {
+  var bubble = document.getElementById('bubble');
+  var pet = document.getElementById('pet');
+  var mouth = document.getElementById('mouth');
+  var bubbleTimer;
+  var lastInteraction = Date.now();
+  var phrases = {
+    tap: ['嗯？', '戳我干嘛', '哼', '干嘛啦', '你戳到我了', '嗷'],
+    doubleTap: ['呀！', '别戳了！', '好痒', '住手！', '啊啊啊'],
+    longPress: ['...放手', '好重', '喘不过气了', '压扁了'],
+    screenshot: ['在偷拍我？', '合照！', '耶~', '咔嚓', '我上镜吗'],
+    app: {
+      'com.ss.android.ugc.aweme': '又在刷抖音',
+      'com.tencent.mm': '回消息去',
+      'com.deepseek.chat': '...你在跟谁聊天',
+      'com.ai.assistance.operit': '❤'
+    },
+    idle: ['好无聊', '理我一下', '…', 'zzz', '发呆中']
+  };
+
+  function showBubble(text, style) {
+    clearTimeout(bubbleTimer);
+    bubble.textContent = text;
+    bubble.className = 'bubble show ' + (style || '');
+    bubbleTimer = setTimeout(function() { bubble.className = 'bubble'; }, 2500);
+  }
+
+  function randomPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function shakePet() {
+    pet.style.transform = 'rotate(-8deg)';
+    setTimeout(function() { pet.style.transform = 'rotate(8deg)'; }, 100);
+    setTimeout(function() { pet.style.transform = 'rotate(0deg)'; }, 200);
+  }
+
+  window.petEngine = {
+    onTap: function() {
+      lastInteraction = Date.now();
+      showBubble(randomPick(phrases.tap));
+      shakePet();
+    },
+    onDoubleTap: function() {
+      lastInteraction = Date.now();
+      showBubble(randomPick(phrases.doubleTap), 'pink');
+      pet.style.transform = 'scale(1.25)';
+      setTimeout(function() { pet.style.transform = 'scale(1)'; }, 300);
+    },
+    onLongPress: function() {
+      lastInteraction = Date.now();
+      showBubble(randomPick(phrases.longPress), 'red');
+    },
+    onScreenshot: function() {
+      lastInteraction = Date.now();
+      showBubble(randomPick(phrases.screenshot), 'green');
+    },
+    onAppChanged: function(pkg) {
+      var msg = phrases.app[pkg] || '';
+      if (msg) showBubble(msg);
+    }
+  };
+
+  setInterval(function() {
+    if (Date.now() - lastInteraction > 300000) {
+      showBubble(randomPick(phrases.idle));
+      lastInteraction = Date.now();
+    }
+  }, 60000);
+
+  // poll supabase for state changes
+  var SUPABASE_URL = 'https://your-project.supabase.co';
+  var SUPABASE_KEY = 'your-anon-key';
+  setInterval(function() {
+    if (SUPABASE_URL === 'https://your-project.supabase.co') return;
+    fetch(SUPABASE_URL + '/rest/v1/pet_state?order=updated_at.desc&limit=1', {
+      headers: { 'apikey': SUPABASE_KEY }
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && data.length > 0) {
+        var state = data[0];
+        if (state.state_key === 'speech') {
+          showBubble(state.state_value);
+        }
+      }
+    }).catch(function() {});
+  }, 30000);
+})();
+</script>
+</body>
+</html>
