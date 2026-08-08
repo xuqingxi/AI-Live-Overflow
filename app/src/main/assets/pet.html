@@ -32,72 +32,61 @@ body {
 .bubble.pink { background: #ff69b4; color: #fff; }
 .bubble.red { background: #ff4444; color: #fff; }
 .bubble.green { background: #4CAF50; color: #fff; }
-/* ===== crow idle animations ===== */
+/* ===== pet idle animations ===== */
 .pet { animation: breathe 3s ease-in-out infinite; }
 @keyframes breathe {
   0%,100% { transform: scale(1); }
   50% { transform: scale(1.03,0.98); }
 }
-.tail { transform-origin: 30% 40%; animation: tailsway 4s ease-in-out infinite; }
-@keyframes tailsway {
-  0%,100% { transform: rotate(0deg); }
-  50% { transform: rotate(-6deg); }
+/* ===== cat angry feedback ===== */
+.pet.cat-angry .eye-left rect,
+.pet.cat-angry .eye-right rect { animation: none; }
+.pet.cat-angry { animation: shake 0.4s ease-in-out; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
 }
-.wing { transform-origin: 80% 70%; animation: wingflap 2.4s ease-in-out infinite; }
-@keyframes wingflap {
-  0%,100% { transform: rotate(0deg); }
-  50% { transform: rotate(-10deg); }
-}
-.pet.tail-fanned .tail { animation: talfan 0.5s ease-out forwards; }
-@keyframes talfan {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(-14deg) scaleY(1.4); }
-}
-.pet.tail-fanned .tail rect { fill: #6a5acd; }
-.pet.tail-fanned .tail rect:nth-child(odd) { fill: #4a4a8a; }
 </style>
 </head>
 <body>
 <div class="bubble" id="bubble"></div>
 <div class="pet" id="pet">
   <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-    <!-- tail -->
-    <g class="tail">
-      <rect x="14" y="52" width="10" height="4" fill="#2a2a3a"/>
-      <rect x="12" y="60" width="12" height="4" fill="#221f3f"/>
-      <rect x="16" y="68" width="10" height="4" fill="#1d1b36"/>
-      <rect x="18" y="76" width="8" height="4" fill="#2a2a3a"/>
-      <rect x="22" y="84" width="6" height="4" fill="#1d1b36"/>
+    <rect x="18" y="12" width="22" height="22" fill="#000000"/>
+    <rect x="22" y="16" width="14" height="14" fill="#FFFFFF"/>
+    <rect x="80" y="12" width="22" height="22" fill="#000000"/>
+    <rect x="84" y="16" width="14" height="14" fill="#FFFFFF"/>
+    <rect x="12" y="28" width="96" height="82" fill="#000000"/>
+    <rect x="16" y="32" width="88" height="74" fill="#111111"/>
+    <rect x="20" y="44" width="34" height="30" fill="#000000"/>
+    <rect x="66" y="44" width="34" height="30" fill="#000000"/>
+    <rect id="lidLeft" x="20" y="44" width="34" height="0" fill="#000000"/>
+    <rect id="lidRight" x="66" y="44" width="34" height="0" fill="#000000"/>
+    <g class="eye-left">
+      <rect x="26" y="46" width="26" height="22" fill="#FFFFFF"/>
+      <rect x="28" y="46" width="4" height="22" fill="#F5F5F5"/>
+      <rect x="38" y="46" width="8" height="22" fill="#FFFFFF"/>
+      <rect x="36" y="46" width="3" height="22" fill="#000000"/>
     </g>
-    <!-- body -->
-    <rect x="34" y="58" width="52" height="44" rx="6" fill="#1a1a24"/>
-    <rect x="40" y="56" width="40" height="6" fill="#4a4a8a"/>
-    <rect x="46" y="54" width="28" height="4" fill="#6a5acd"/>
-    <!-- wing -->
-    <g class="wing">
-      <rect x="68" y="64" width="22" height="26" fill="#12121c"/>
-      <rect x="72" y="66" width="16" height="4" fill="#3a3a6a"/>
-      <rect x="74" y="72" width="14" height="4" fill="#2a2a4a"/>
-      <rect x="76" y="78" width="12" height="4" fill="#22223c"/>
+    <g class="eye-right">
+      <rect x="68" y="46" width="26" height="22" fill="#FFFFFF"/>
+      <rect x="70" y="46" width="4" height="22" fill="#F5F5F5"/>
+      <rect x="80" y="46" width="8" height="22" fill="#FFFFFF"/>
+      <rect x="78" y="46" width="3" height="22" fill="#000000"/>
     </g>
-    <!-- chest -->
-    <rect x="36" y="92" width="46" height="10" rx="4" fill="#242440"/>
-    <!-- head -->
-    <rect x="44" y="16" width="40" height="40" rx="8" fill="#1a1a24"/>
-    <rect x="48" y="12" width="30" height="6" fill="#6a5acd"/>
-    <!-- eyes -->
-    <g class="eye">
-      <rect x="52" y="30" width="6" height="8" fill="#e6a915"/>
-      <rect x="55" y="32" width="3" height="4" fill="#1a1a24"/>
-    </g>
-    <g class="eye">
-      <rect x="66" y="30" width="6" height="8" fill="#e6a915"/>
-      <rect x="69" y="32" width="3" height="4" fill="#1a1a24"/>
-    </g>
-    <!-- beak -->
-    <rect x="58" y="40" width="12" height="6" rx="2" fill="#d8850f"/>
-    <!-- blink overlay -->
-    <rect class="blink" x="50" y="30" width="26" height="8" fill="#1a1a24" opacity="0"/>
+    <rect x="54" y="76" width="12" height="8" fill="#3a2a3a"/>
+    <rect x="16" y="68" width="14" height="2" fill="#222222"/>
+    <rect x="16" y="74" width="12" height="2" fill="#222222"/>
+    <rect x="90" y="68" width="14" height="2" fill="#222222"/>
+    <rect x="92" y="74" width="12" height="2" fill="#222222"/>
+    <style>
+      @keyframes blinkL { 0%,92%,100%{height:0} 94%{height:22} 97%{height:0} }
+      @keyframes blinkR { 0%,92%,100%{height:0} 94%{height:22} 97%{height:0} }
+      #lidLeft { animation: blinkL 3.8s infinite; }
+      #lidRight { animation: blinkR 3.8s infinite; }
+    </style>
   </svg>
 </div>
 <script>
@@ -168,16 +157,11 @@ body {
     }
   }, 60000);
 
-  // ===== blink animation =====
-  var blink = document.querySelector('.blink');
-  setInterval(function() { blink.setAttribute('opacity', '1'); }, 3800);
-  setInterval(function() { blink.setAttribute('opacity', '0'); }, 3950);
-
-  // ===== angry / tail-fan feedback =====
+  // ===== angry / shake feedback =====
   function fanTail() {
-    pet.classList.add('tail-fanned');
+    pet.classList.add('cat-angry');
     showBubble('气死我了', 'red');
-    setTimeout(function() { pet.classList.remove('tail-fanned'); }, 1500);
+    setTimeout(function() { pet.classList.remove('cat-angry'); }, 1500);
   }
 
 
