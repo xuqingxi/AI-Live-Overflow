@@ -53,7 +53,7 @@ body {
 <body>
 <div class="bubble" id="bubble"></div>
 <div class="pet" id="pet">
-  <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <svg id="petsvg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
     <rect x="18" y="12" width="22" height="22" fill="#000000"/>
     <rect x="22" y="16" width="14" height="14" fill="#FFFFFF"/>
     <rect x="80" y="12" width="22" height="22" fill="#000000"/>
@@ -93,8 +93,9 @@ body {
 (function() {
   var bubble = document.getElementById('bubble');
   // ===== eyelid blink (JS-driven) =====
-  var lidL = document.getElementById('lidLeft');
-  var lidR = document.getElementById('lidRight');
+  var svgRoot = document.getElementById('petsvg');
+  var lidL = svgRoot ? svgRoot.getElementById('lidLeft') : null;
+  var lidR = svgRoot ? svgRoot.getElementById('lidRight') : null;
   function blinkOnce() {
     if (!lidL || !lidR) return;
     lidL.setAttribute('height', '22');
