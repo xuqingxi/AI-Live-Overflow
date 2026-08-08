@@ -84,14 +84,34 @@ body {
     <style>
       @keyframes blinkL { 0%,92%,100%{height:0} 94%{height:22} 97%{height:0} }
       @keyframes blinkR { 0%,92%,100%{height:0} 94%{height:22} 97%{height:0} }
-      #lidLeft { animation: blinkL 3.8s infinite; }
-      #lidRight { animation: blinkR 3.8s infinite; }
+      #lidLeft { animation: none; }
+      #lidRight { animation: none; }
     </style>
   </svg>
 </div>
 <script>
 (function() {
   var bubble = document.getElementById('bubble');
+  // ===== eyelid blink (JS-driven) =====
+  var lidL = document.getElementById('lidLeft');
+  var lidR = document.getElementById('lidRight');
+  function blinkOnce() {
+    if (!lidL || !lidR) return;
+    lidL.setAttribute('height', '22');
+    lidR.setAttribute('height', '22');
+    setTimeout(function() {
+      lidL.setAttribute('height', '0');
+      lidR.setAttribute('height', '0');
+    }, 160);
+  }
+  function scheduleBlink() {
+    setTimeout(function() {
+      blinkOnce();
+      scheduleBlink();
+    }, 2000 + Math.random() * 3000);
+  }
+  scheduleBlink();
+
   var pet = document.getElementById('pet');
   var mouth = document.getElementById('mouth');
   var bubbleTimer;
