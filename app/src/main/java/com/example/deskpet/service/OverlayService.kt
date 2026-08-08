@@ -178,7 +178,7 @@ class OverlayService : Service() {
         }
     }
 
-    // 松手后：Fling 甩出或普通拖拽，kotlin 驱动窗口移动（甩出+走回动画）
+    // 松手后：Fling 甩出屏幕外，再从屏幕外一步一步走回来（真正的走路）
     private fun returnHome(speed: Double, vx: Int, vy: Int) {
         val wm = windowManager ?: return
         val curX = params?.x ?: 0
@@ -186,15 +186,21 @@ class OverlayService : Service() {
         val scrW = resources.displayMetrics.widthPixels
         val scrH = resources.displayMetrics.heightPixels
         val winW = dpToPx(PET_SIZE_DP)
-        val winH = dpToPx(PET_SIZE_DP)
+        val winH = dpToPx(PET_HEIGHT_DP)
         // 锚点：屏幕右侧内侧
         val homeX = scrW - winW - dpToPx(24)
-        // Y 保持在屏幕内
         val homeY = Math.max(dpToPx(10), Math.min(scrH - winH - dpToPx(40), curY))
+        overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onReleased(${curX}, ${curY}, ${speed}, $vx, $vy)", null)
+        supabaseSync?.logGesture(if (pendingFling) "fling" else "drag", curX, curY)
+        if (!pendingFling) {
+            // 普通拖拽：直接改为走路走回（配合 walk 形态）
+            startWalkingBack(curX.toFloat(), curY.toFloat(), homeX.toFloat(), homeY.toFloat(), 700L)
+            return
+        }
 
-        // 甩出动画：沿速度方向快速滑出，能越过屏幕边缘（不做 clamp，可直接跑出可见区）
+        // Fling：先甩出屏幕外（260ms），再从屏幕外走回来
         val flingOut = android.animation.ValueAnimator.ofFloat(0f, 1f)
-        flingOut.duration = if (pendingFling) 260L else 200L
+        flingOut.duration = 260L
         flingOut.addUpdateListener { a ->
             val t = a.animatedValue as Float
             params?.x = (curX + (vx * 1.5f * t)).toInt()
@@ -203,42 +209,47 @@ class OverlayService : Service() {
         }
         flingOut.addListener(object : android.animation.AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: android.animation.Animator) {
+                // 甩出结束，开始走路走回（此时可能已在屏幕外）
                 val fx = params?.x ?: curX
                 val fy = params?.y ?: curY
-                // 从甩出点爬回锚点，走很长的路，像走路回来
-                val ret = android.animation.ValueAnimator.ofFloat(0f, 1f)
-                ret.duration = if (pendingFling) 2600L else 800L
-                ret.addUpdateListener { a ->
-                    val t = a.animatedValue as Float
-                    val eased = 1 - ((1 - t) * (1 - t))
-                    params?.x = (fx + (homeX - fx) * eased).toInt()
-                    params?.y = (fy + (homeY - fy) * eased).toInt()
-                    if (wm != null && params != null) wm.updateViewLayout(overlayView, params)
-                }
-                ret.start()
+                // 甩得越远走得越久
+                val dist = Math.sqrt((homeX - fx).toDouble() * (homeX - fx).toDouble() + (homeY - fy).toDouble() * (homeY - fy).toDouble())
+                val walkMs = Math.min(3200L, Math.max(1200L, (dist * 1.8).toLong()))
+                startWalkingBack(fx.toFloat(), fy.toFloat(), homeX.toFloat(), homeY.toFloat(), walkMs)
             }
         })
-        if (pendingFling) {
-            flingOut.start()
-        } else {
-            // 普通拖拽：直接从当前位置爬回
-            val ret = android.animation.ValueAnimator.ofFloat(0f, 1f)
-            ret.duration = 800L
-            ret.addUpdateListener { a ->
-                val t = a.animatedValue as Float
-                val eased = 1 - ((1 - t) * (1 - t))
-                params?.x = (curX + (homeX - curX) * eased).toInt()
-                params?.y = (curY + (homeY - curY) * eased).toInt()
-                if (wm != null && params != null) wm.updateViewLayout(overlayView, params)
-            }
-            ret.start()
-        }
-        // 通知 JS 做表情/气泡
-        overlayView?.evaluateJavascript(
-            "window.petEngine && window.petEngine.onReleased(${curX}, ${curY}, ${speed}, $vx, $vy)", null
-        )
-        supabaseSync?.logGesture(if (pendingFling) "fling" else "drag", curX, curY)
+        flingOut.start()
     }
+
+    // 步进式走路回归：每次小幅移动 + 走路节奏停顿，配合JS walk形态
+    private fun startWalkingBack(startX: Float, startY: Float, endX: Float, endY: Float, durationMs: Long) {
+        val wm = windowManager ?: return
+        // 切换到 walk 形态
+        overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onStartWalking()", null)
+        // 总步数：每步约 12ms 间隔 + 6px 步长，保证走路节奏感
+        val dist = Math.sqrt((endX - startX).toDouble() * (endX - startX).toDouble() + (endY - startY).toDouble() * (endY - startY).toDouble())
+        val stepCount = Math.max(6, Math.min(40, Math.ceil(dist / 8.0).toInt()))
+        val stepDelay = durationMs / stepCount
+        var step = 0
+        val walkRunnable = object : Runnable {
+            override fun run() {
+                if (step >= stepCount || wm == null || params == null) {
+                    // 到达终点，恢复 normal 形态
+                    overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onStopWalking()", null)
+                    return
+                }
+                step++
+                val t = step.toFloat() / stepCount.toFloat()
+                val eased = 1 - ((1 - t) * (1 - t))
+                params?.x = (startX + (endX - startX) * eased).toInt()
+                params?.y = (startY + (endY - startY) * eased).toInt()
+                wm.updateViewLayout(overlayView, params)
+                handler.postDelayed(this, stepDelay)
+            }
+        }
+        handler.post(walkRunnable)
+    }
+
     private fun onTap() {
         overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onTap()", null)
         supabaseSync?.logGesture("tap", params?.x ?: 0, params?.y ?: 0)
