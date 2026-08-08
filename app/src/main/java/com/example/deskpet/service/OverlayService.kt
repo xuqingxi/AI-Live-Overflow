@@ -193,8 +193,8 @@ class OverlayService : Service() {
         overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onReleased(${curX}, ${curY}, ${speed}, $vx, $vy)", null)
         supabaseSync?.logGesture(if (pendingFling) "fling" else "drag", curX, curY)
         if (!pendingFling) {
-            // 普通拖拽：直接改为走路走回（配合 walk 形态）
-            startWalkingBack(curX.toFloat(), curY.toFloat(), homeX.toFloat(), homeY.toFloat(), 700L)
+            // 普通拖拽：拖到哪就停哪，绝不走回（配合自由放置）
+            overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onStopWalking()", null)
             return
         }
 
@@ -234,8 +234,8 @@ class OverlayService : Service() {
         val walkRunnable = object : Runnable {
             override fun run() {
                 if (step >= stepCount || wm == null || params == null) {
-                    // 到达终点，恢复 normal 形态
-                    overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onStopWalking()", null)
+                    // 到达终点，恢复 normal 形态并蹦跳两三下（生气但可爱）
+                    overlayView?.evaluateJavascript("window.petEngine && window.petEngine.onReturnedHome()", null)
                     return
                 }
                 step++

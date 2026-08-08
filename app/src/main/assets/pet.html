@@ -5,190 +5,172 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: transparent; display: flex; align-items: center; justify-content: center; width: 100vw; height: 100vh; overflow: hidden; font-family: sans-serif; }
-.pet { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; user-select: none; position: relative; }
-.pet svg { width: 100%; height: 100%; overflow: visible; }
-.bubble { position: absolute; top: -34px; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 12px; padding: 4px 10px; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15); opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 999; }
+body { background: transparent; width: 100vw; height: 100vh; overflow: hidden; font-family: sans-serif; display: flex; align-items: center; justify-content: center; }
+.pet { position: relative; user-select: none; transform-origin: center; }
+.pet svg { display: block; }
+.bubble { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 12px; padding: 4px 10px; font-size: 12px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15); opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 999; }
 .bubble.show { opacity: 1; }
 .bubble.pink { background: #ff69b4; color: #fff; }
 .bubble.red { background: #ff4444; color: #fff; }
 .bubble.green { background: #4CAF50; color: #fff; }
 .form { display: none; }
 body.form-normal #f-normal, body.form-walk #f-walk, body.form-angry #f-angry, body.form-happy #f-happy, body.form-sad #f-sad, body.form-sleepy #f-sleepy, body.form-confused #f-confused { display: block; }
-body.form-normal #f-normal { animation: breathe 3s ease-in-out infinite; transform-origin: bottom center; }
-@keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03,0.97) translateY(1px); } }
-body.form-normal .eyewhite { animation: blinkWhite 3.4s ease-in-out infinite; }
-body.form-normal .pupil { animation: blinkPupil 3.4s ease-in-out infinite; }
-@keyframes blinkWhite { 0%,90%,100% { opacity: 1; } 93% { opacity: 0; } 96% { opacity: 1; } }
-@keyframes blinkPupil { 0%,90%,100% { opacity: 1; } 93% { opacity: 0; } 96% { opacity: 1; } }
-body.form-walk #f-walk { animation: walkBob 0.3s ease-in-out infinite; transform-origin: bottom center; }
+/* normal 呼吸 */
+body.form-normal #f-normal { animation: breathe 3s ease-in-out infinite; transform-origin: center; }
+@keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02,0.975) translateY(1px); } }
+body.form-normal .eyeL .eyewhite, body.form-normal .eyeR .eyewhite { animation: blinkW 3.2s ease-in-out infinite; }
+body.form-normal .eyeL .pupil, body.form-normal .eyeR .pupil { animation: blinkP 3.2s ease-in-out infinite; }
+@keyframes blinkW { 0%,90%,100% { opacity:1; } 93% { opacity:0; } 96% { opacity:1; } }
+@keyframes blinkP { 0%,90%,100% { opacity:1; } 93% { opacity:0; } 96% { opacity:1; } }
+/* walk 走路（腿圆点点 + 身体轻微上下颠） */
+body.form-walk #f-walk { animation: walkBob 0.22s ease-in-out infinite; transform-origin: center; }
 @keyframes walkBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-body.form-walk .leg-l { animation: legL 0.3s ease-in-out infinite; }
-body.form-walk .leg-r { animation: legR 0.3s ease-in-out infinite; }
+body.form-walk .leg-l { animation: legL 0.22s linear infinite; }
+body.form-walk .leg-r { animation: legR 0.22s linear infinite; }
 @keyframes legL { 0%,100% { transform: translateX(0); } 50% { transform: translateX(-3px); } }
 @keyframes legR { 0%,100% { transform: translateX(3px); } 50% { transform: translateX(0); } }
-body.form-angry #f-angry { animation: angryShake 0.22s ease-in-out infinite; transform-origin: bottom center; }
-@keyframes angryShake { 0%,100% { transform: translateX(0) rotate(-1deg); } 25% { transform: translateX(-2px); } 50% { transform: translateX(2px); } 75% { transform: translateX(-1px); } }
-body.form-happy #f-happy { animation: happyJump 0.45s ease-in-out infinite; transform-origin: bottom center; }
-@keyframes happyJump { 0%,100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-6px) scale(1.05,1); } 80% { transform: translateY(0) scale(0.97,1.03); } }
-body.form-sleepy #f-sleepy { animation: sleepBreath 2.6s ease-in-out infinite; transform-origin: bottom center; }
-@keyframes sleepBreath { 0%,100% { transform: scale(1,1); } 50% { transform: scale(1.04,0.96); } }
+/* angry 蹦跳（生气但可爱：三连跳 + 抖） */
+body.form-angry #f-angry { animation: angryJump 0.5s ease-in-out infinite; transform-origin: center; }
+@keyframes angryJump {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-14px) rotate(-6deg); }
+  60% { transform: translateY(0) rotate(6deg); }
+  80% { transform: translateY(-9px); }
+  100% { transform: translateY(0); }
+}
+/* happy 开心（笑眼 >< + 横D嘴） */
+body.form-happy #f-happy { animation: happyJump 0.45s ease-in-out infinite; transform-origin: center; }
+@keyframes happyJump { 0%,100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-7px) scale(1.04,0.97); } 80% { transform: translateY(0) scale(0.97,1.03); } }
+/* sleepy 睡觉 */
+body.form-sleepy #f-sleepy { animation: sleepBreath 2.6s ease-in-out infinite; transform-origin: center; }
+@keyframes sleepBreath { 0%,100% { transform: scale(1,1); } 50% { transform: scale(1.03,0.97); } }
 body.form-sleepy .zzz { animation: floatUp 1.8s ease-in-out infinite; }
-@keyframes floatUp { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px); } }
-body.form-sad #f-sad { animation: sadSway 2s ease-in-out infinite; transform-origin: bottom center; }
+@keyframes floatUp { 0% { opacity:0; transform: translateY(0); } 20% { opacity:1; } 100% { opacity:0; transform: translateY(-24px); } }
+/* sad 难过（垂下耳朵） */
+body.form-sad #f-sad { animation: sadSway 2s ease-in-out infinite; transform-origin: center; }
 @keyframes sadSway { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
-body.form-confused #f-confused { animation: confusedTilt 1.1s ease-in-out infinite; transform-origin: bottom center; }
+/* confused 困惑（歪头抖） */
+body.form-confused #f-confused { animation: confusedTilt 1.1s ease-in-out infinite; transform-origin: center; }
 @keyframes confusedTilt { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(8deg); } }
 </style>
 </head>
 <body class="form-normal">
 <div class="bubble" id="bubble"></div>
 <div class="pet" id="pet">
-<svg id="petsvg" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+<svg id="petsvg" viewBox="-15 -4 31 20" xmlns="http://www.w3.org/2000/svg">
 
-<!-- 正常：一颗头 -->
+<!-- 基础身体像素块（黑猫：头+身体+腹部 按你坐标逐格） -->
+<g id="pixelBody">
+  <!-- Y=-3 -->
+  <rect x="-3" y="-3" width="1" height="1" fill="#000"/><rect x="6" y="-3" width="1" height="1" fill="#000"/>
+  <!-- Y=-2 -->
+  <rect x="-4" y="-2" width="1" height="1" fill="#000"/><rect x="-3" y="-2" width="1" height="1" fill="#000"/><rect x="-2" y="-2" width="1" height="1" fill="#000"/><rect x="5" y="-2" width="1" height="1" fill="#000"/><rect x="6" y="-2" width="1" height="1" fill="#000"/><rect x="7" y="-2" width="1" height="1" fill="#000"/>
+  <!-- Y=-1 -->
+  <rect x="-4" y="-1" width="1" height="1" fill="#000"/><rect x="-3" y="-1" width="1" height="1" fill="#000"/><rect x="0" y="-1" width="1" height="1" fill="#000"/><rect x="1" y="-1" width="1" height="1" fill="#000"/><rect x="5" y="-1" width="1" height="1" fill="#000"/><rect x="7" y="-1" width="1" height="1" fill="#000"/><rect x="8" y="-1" width="1" height="1" fill="#000"/>
+  <!-- Y=0 -->
+  <rect x="-4" y="0" width="1" height="1" fill="#000"/><rect x="-3" y="0" width="1" height="1" fill="#000"/><rect x="-2" y="0" width="1" height="1" fill="#000"/><rect x="1" y="0" width="1" height="1" fill="#000"/><rect x="2" y="0" width="1" height="1" fill="#000"/><rect x="3" y="0" width="1" height="1" fill="#000"/><rect x="4" y="0" width="1" height="1" fill="#000"/><rect x="5" y="0" width="1" height="1" fill="#000"/><rect x="7" y="0" width="1" height="1" fill="#000"/><rect x="8" y="0" width="1" height="1" fill="#000"/>
+  <!-- Y=1 -->
+  <rect x="-4" y="1" width="1" height="1" fill="#000"/><rect x="-3" y="1" width="1" height="1" fill="#000"/><rect x="-2" y="1" width="1" height="1" fill="#000"/><rect x="0" y="1" width="1" height="1" fill="#000"/><rect x="2" y="1" width="1" height="1" fill="#000"/><rect x="3" y="1" width="1" height="1" fill="#000"/><rect x="4" y="1" width="1" height="1" fill="#000"/><rect x="6" y="1" width="1" height="1" fill="#000"/><rect x="7" y="1" width="1" height="1" fill="#000"/><rect x="8" y="1" width="1" height="1" fill="#000"/>
+  <!-- Y=2 -->
+  <rect x="-6" y="2" width="1" height="1" fill="#000"/><rect x="-5" y="2" width="1" height="1" fill="#000"/><rect x="-4" y="2" width="1" height="1" fill="#000"/><rect x="-3" y="2" width="1" height="1" fill="#000"/><rect x="-2" y="2" width="1" height="1" fill="#000"/><rect x="-1" y="2" width="1" height="1" fill="#000"/><rect x="0" y="2" width="1" height="1" fill="#000"/><rect x="1" y="2" width="1" height="1" fill="#000"/><rect x="2" y="2" width="1" height="1" fill="#000"/><rect x="3" y="2" width="1" height="1" fill="#000"/><rect x="4" y="2" width="1" height="1" fill="#000"/><rect x="5" y="2" width="1" height="1" fill="#000"/><rect x="6" y="2" width="1" height="1" fill="#000"/><rect x="7" y="2" width="1" height="1" fill="#000"/><rect x="8" y="2" width="1" height="1" fill="#000"/>
+</g>
+  <!-- Y=3 -->
+  <rect x="-7" y="3" width="1" height="1" fill="#000"/><rect x="-6" y="3" width="1" height="1" fill="#000"/><rect x="-5" y="3" width="1" height="1" fill="#000"/><rect x="-4" y="3" width="1" height="1" fill="#000"/><rect x="-3" y="3" width="1" height="1" fill="#000"/><rect x="-2" y="3" width="1" height="1" fill="#000"/><rect x="-1" y="3" width="1" height="1" fill="#000"/><rect x="0" y="3" width="1" height="1" fill="#000"/><rect x="1" y="3" width="1" height="1" fill="#000"/><rect x="2" y="3" width="1" height="1" fill="#000"/><rect x="3" y="3" width="1" height="1" fill="#000"/><rect x="4" y="3" width="1" height="1" fill="#000"/><rect x="5" y="3" width="1" height="1" fill="#000"/><rect x="6" y="3" width="1" height="1" fill="#000"/><rect x="7" y="3" width="1" height="1" fill="#000"/><rect x="8" y="3" width="1" height="1" fill="#000"/>
+  <!-- Y=4 -->
+  <rect x="-7" y="4" width="1" height="1" fill="#000"/><rect x="-6" y="4" width="1" height="1" fill="#000"/><rect x="-5" y="4" width="1" height="1" fill="#000"/><rect x="-4" y="4" width="1" height="1" fill="#000"/><rect x="-3" y="4" width="1" height="1" fill="#000"/><rect x="-2" y="4" width="1" height="1" fill="#000"/><rect x="-1" y="4" width="1" height="1" fill="#000"/><rect x="0" y="4" width="1" height="1" fill="#000"/><rect x="1" y="4" width="1" height="1" fill="#000"/><rect x="2" y="4" width="1" height="1" fill="#000"/><rect x="3" y="4" width="1" height="1" fill="#000"/><rect x="4" y="4" width="1" height="1" fill="#000"/><rect x="5" y="4" width="1" height="1" fill="#000"/><rect x="6" y="4" width="1" height="1" fill="#000"/><rect x="7" y="4" width="1" height="1" fill="#000"/><rect x="8" y="4" width="1" height="1" fill="#000"/>
+  <!-- Y=5 -->
+  <rect x="-7" y="5" width="1" height="1" fill="#000"/><rect x="-6" y="5" width="1" height="1" fill="#000"/><rect x="-5" y="5" width="1" height="1" fill="#000"/><rect x="-4" y="5" width="1" height="1" fill="#000"/><rect x="-3" y="5" width="1" height="1" fill="#000"/><rect x="-2" y="5" width="1" height="1" fill="#000"/><rect x="-1" y="5" width="1" height="1" fill="#000"/><rect x="0" y="5" width="1" height="1" fill="#000"/><rect x="1" y="5" width="1" height="1" fill="#000"/><rect x="2" y="5" width="1" height="1" fill="#000"/><rect x="3" y="5" width="1" height="1" fill="#000"/><rect x="4" y="5" width="1" height="1" fill="#000"/><rect x="5" y="5" width="1" height="1" fill="#000"/><rect x="6" y="5" width="1" height="1" fill="#000"/><rect x="7" y="5" width="1" height="1" fill="#000"/><rect x="8" y="5" width="1" height="1" fill="#000"/>
+  <!-- Y=6 -->
+  <rect x="-12" y="6" width="1" height="1" fill="#000"/><rect x="-11" y="6" width="1" height="1" fill="#000"/><rect x="-10" y="6" width="1" height="1" fill="#000"/><rect x="-9" y="6" width="1" height="1" fill="#000"/><rect x="-7" y="6" width="1" height="1" fill="#000"/><rect x="-6" y="6" width="1" height="1" fill="#000"/><rect x="-5" y="6" width="1" height="1" fill="#000"/><rect x="-4" y="6" width="1" height="1" fill="#000"/><rect x="-3" y="6" width="1" height="1" fill="#000"/><rect x="-2" y="6" width="1" height="1" fill="#000"/><rect x="0" y="6" width="1" height="1" fill="#000"/><rect x="1" y="6" width="1" height="1" fill="#000"/><rect x="2" y="6" width="1" height="1" fill="#000"/><rect x="3" y="6" width="1" height="1" fill="#000"/><rect x="4" y="6" width="1" height="1" fill="#000"/><rect x="6" y="6" width="1" height="1" fill="#000"/><rect x="7" y="6" width="1" height="1" fill="#000"/><rect x="8" y="6" width="1" height="1" fill="#000"/>
+  <!-- Y=7 腹部白色 + 黑色 -->
+  <rect x="-14" y="7" width="1" height="1" fill="#000"/><rect x="-13" y="7" width="1" height="1" fill="#000"/><rect x="-12" y="7" width="1" height="1" fill="#000"/><rect x="-11" y="7" width="1" height="1" fill="#000"/><rect x="-10" y="7" width="1" height="1" fill="#000"/><rect x="-9" y="7" width="1" height="1" fill="#000"/><rect x="-8" y="7" width="1" height="1" fill="#000"/><rect x="-7" y="7" width="1" height="1" fill="#000"/><rect x="-6" y="7" width="1" height="1" fill="#000"/><rect x="-5" y="7" width="1" height="1" fill="#000"/><rect x="-4" y="7" width="1" height="1" fill="#000"/><rect x="-3" y="7" width="1" height="1" fill="#000"/><rect x="-2" y="7" width="1" height="1" fill="#000"/>
+  <rect x="1" y="7" width="1" height="1" fill="#000"/><rect x="2" y="7" width="1" height="1" fill="#000"/><rect x="3" y="7" width="1" height="1" fill="#000"/><rect x="7" y="7" width="1" height="1" fill="#000"/><rect x="8" y="7" width="1" height="1" fill="#000"/><rect x="9" y="7" width="1" height="1" fill="#000"/>
+  <rect x="-2" y="7" width="1" height="1" fill="#fff"/><rect x="-1" y="7" width="1" height="1" fill="#fff"/><rect x="0" y="7" width="1" height="1" fill="#fff"/>
+  <rect x="4" y="7" width="1" height="1" fill="#fff"/><rect x="5" y="7" width="1" height="1" fill="#fff"/><rect x="6" y="7" width="1" height="1" fill="#fff"/>
+  <!-- Y=8 -->
+  <rect x="-14" y="8" width="1" height="1" fill="#000"/><rect x="-13" y="8" width="1" height="1" fill="#000"/><rect x="-12" y="8" width="1" height="1" fill="#000"/><rect x="-7" y="8" width="1" height="1" fill="#000"/><rect x="-6" y="8" width="1" height="1" fill="#000"/><rect x="-5" y="8" width="1" height="1" fill="#000"/><rect x="-4" y="8" width="1" height="1" fill="#000"/><rect x="-3" y="8" width="1" height="1" fill="#000"/><rect x="-2" y="8" width="1" height="1" fill="#000"/><rect x="-1" y="8" width="1" height="1" fill="#000"/><rect x="0" y="8" width="1" height="1" fill="#000"/><rect x="1" y="8" width="1" height="1" fill="#000"/><rect x="2" y="8" width="1" height="1" fill="#000"/><rect x="3" y="8" width="1" height="1" fill="#000"/><rect x="4" y="8" width="1" height="1" fill="#000"/><rect x="5" y="8" width="1" height="1" fill="#000"/><rect x="6" y="8" width="1" height="1" fill="#000"/><rect x="7" y="8" width="1" height="1" fill="#000"/><rect x="8" y="8" width="1" height="1" fill="#000"/>
+  <!-- Y=9 -->
+  <rect x="-6" y="9" width="1" height="1" fill="#000"/><rect x="-5" y="9" width="1" height="1" fill="#000"/><rect x="-4" y="9" width="1" height="1" fill="#000"/><rect x="-3" y="9" width="1" height="1" fill="#000"/><rect x="-2" y="9" width="1" height="1" fill="#000"/><rect x="-1" y="9" width="1" height="1" fill="#000"/><rect x="0" y="9" width="1" height="1" fill="#000"/><rect x="1" y="9" width="1" height="1" fill="#000"/><rect x="2" y="9" width="1" height="1" fill="#000"/><rect x="3" y="9" width="1" height="1" fill="#000"/><rect x="4" y="9" width="1" height="1" fill="#000"/><rect x="5" y="9" width="1" height="1" fill="#000"/><rect x="6" y="9" width="1" height="1" fill="#000"/><rect x="7" y="9" width="1" height="1" fill="#000"/>
+  <!-- Y=10 -->
+  <rect x="-5" y="10" width="1" height="1" fill="#000"/><rect x="-4" y="10" width="1" height="1" fill="#000"/><rect x="-3" y="10" width="1" height="1" fill="#000"/><rect x="-2" y="10" width="1" height="1" fill="#000"/><rect x="-1" y="10" width="1" height="1" fill="#000"/><rect x="0" y="10" width="1" height="1" fill="#000"/><rect x="1" y="10" width="1" height="1" fill="#000"/><rect x="2" y="10" width="1" height="1" fill="#000"/><rect x="3" y="10" width="1" height="1" fill="#000"/><rect x="4" y="10" width="1" height="1" fill="#000"/><rect x="5" y="10" width="1" height="1" fill="#000"/>
+</g>
+
+<!-- ========== 正常：像素猫 + 圆眼睁眼 ========== -->
 <g id="f-normal" class="form">
-  <rect x="16" y="14" width="15" height="13" rx="2" fill="#000"/>
-  <rect x="21" y="17" width="6" height="9" fill="#e8c9a8"/>
-  <rect x="65" y="14" width="15" height="13" rx="2" fill="#000"/>
-  <rect x="69" y="17" width="6" height="9" fill="#e8c9a8"/>
-  <rect x="18" y="25" width="60" height="13" rx="6" fill="#000"/>
-  <rect x="15" y="36" width="66" height="12" rx="6" fill="#000"/>
-  <rect x="13" y="46" width="70" height="12" rx="6" fill="#000"/>
-  <rect x="17" y="56" width="62" height="11" rx="6" fill="#000"/>
-  <rect x="24" y="65" width="48" height="10" rx="5" fill="#000"/>
-  <g class="eye"><rect class="eyewhite" x="23" y="40" width="20" height="9" rx="4" fill="#fff"/><rect class="pupil" x="29" y="42" width="7" height="5" rx="2" fill="#333"/></g>
-  <g class="eye"><rect class="eyewhite" x="53" y="40" width="20" height="9" rx="4" fill="#fff"/><rect class="pupil" x="59" y="42" width="7" height="5" rx="2" fill="#333"/></g>
-  <line x1="44" y1="59" x2="52" y2="59" stroke="#ff6b8a" stroke-width="2.4" stroke-linecap="round"/>
-  <line x1="8" y1="46" x2="21" y2="48" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-  <line x1="6" y1="53" x2="20" y2="53" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-  <line x1="88" y1="46" x2="75" y2="48" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-  <line x1="90" y1="53" x2="76" y2="53" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
+  <use href="#pixelBody"/>
+  <g class="eyeL"><rect class="eyewhite" x="-2.0" y="-1" width="3" height="3" fill="#fff"/><rect class="pupil" x="-1.2" y="-0.2" width="1.2" height="1.2" fill="#333"/></g>
+  <g class="eyeR"><rect class="eyewhite" x="4.0" y="-1" width="3" height="3" fill="#fff"/><rect class="pupil" x="4.8" y="-0.2" width="1.2" height="1.2" fill="#333"/></g>
+  <line x1="-0.2" y1="1.6" x2="0.8" y2="1.6" stroke="#ff8fb3" stroke-width="0.32" stroke-linecap="round"/>
 </g>
-<!-- 生气：炸毛瞪眼 -->
+
+<!-- ========== 生气：瞪眼 + 炸毛 + 咬牙（回到中间蹦跳时用） ========== -->
 <g id="f-angry" class="form">
-  <rect x="15" y="14" width="16" height="13" rx="2" fill="#000"/>
-  <rect x="20" y="17" width="6" height="9" fill="#b78e68"/>
-  <rect x="65" y="14" width="16" height="13" rx="2" fill="#000"/>
-  <rect x="70" y="17" width="6" height="9" fill="#b78e68"/>
-  <rect x="26" y="7" width="7" height="7" fill="#000"/>
-  <rect x="44" y="5" width="7" height="7" fill="#000"/>
-  <rect x="63" y="7" width="7" height="7" fill="#000"/>
-  <rect x="18" y="25" width="60" height="13" rx="6" fill="#000"/>
-  <rect x="15" y="36" width="66" height="12" rx="6" fill="#000"/>
-  <rect x="13" y="46" width="70" height="12" rx="6" fill="#000"/>
-  <rect x="17" y="56" width="62" height="11" rx="6" fill="#000"/>
-  <rect x="24" y="65" width="48" height="10" rx="5" fill="#000"/>
-  <g stroke="#fff" stroke-width="3.2" stroke-linecap="round">
-    <line x1="26" y1="40" x2="39" y2="51"/><line x1="39" y1="40" x2="26" y2="51"/>
-    <line x1="57" y1="40" x2="70" y2="51"/><line x1="70" y1="40" x2="57" y2="51"/>
+  <use href="#pixelBody"/>
+  <g>
+    <line x1="-3.0" y1="-1.2" x2="-0.8" y2="0.4" stroke="#fff" stroke-width="0.4" stroke-linecap="round"/>
+    <line x1="-0.8" y1="-1.2" x2="-3.0" y2="0.4" stroke="#fff" stroke-width="0.4" stroke-linecap="round"/>
   </g>
-  <rect x="42" y="58" width="12" height="5" rx="1" fill="#fff" stroke="#000" stroke-width="1"/>
-  <line x1="46" y1="58" x2="46" y2="62" stroke="#000" stroke-width="1"/>
-  <line x1="50" y1="58" x2="50" y2="62" stroke="#000" stroke-width="1"/>
-  <line x1="6" y1="44" x2="20" y2="46" stroke="#ddd" stroke-width="1.4" opacity="0.8"/>
-  <line x1="4" y1="51" x2="19" y2="51" stroke="#ddd" stroke-width="1.4" opacity="0.8"/>
-  <line x1="90" y1="44" x2="76" y2="46" stroke="#ddd" stroke-width="1.4" opacity="0.8"/>
-  <line x1="92" y1="51" x2="77" y2="51" stroke="#ddd" stroke-width="1.4" opacity="0.8"/>
+  <g>
+    <line x1="3.8" y1="-1.2" x2="6.0" y2="0.4" stroke="#fff" stroke-width="0.4" stroke-linecap="round"/>
+    <line x1="6.0" y1="-1.2" x2="3.8" y2="0.4" stroke="#fff" stroke-width="0.4" stroke-linecap="round"/>
+  </g>
+  <rect x="-0.9" y="1.5" width="2.4" height="0.9" rx="0.2" fill="#fff"/>
+  <line x1="-0.4" y1="1.5" x2="-0.4" y2="2.3" stroke="#000" stroke-width="0.3"/>
+  <line x1="0.5" y1="1.5" x2="0.5" y2="2.3" stroke="#000" stroke-width="0.3"/>
+  <path d="M-5.4 -2.0 L-4.6 -3.2" stroke="#000" stroke-width="0.4" stroke-linecap="round"/>
+  <path d="M6.4 -2.0 L7.2 -3.2" stroke="#000" stroke-width="0.4" stroke-linecap="round"/>
 </g>
 
-<!-- 开心：笑弯眼 >< + 横D嘴 -->
+<!-- ========== 开心：笑眼 >< + 横D嘴 ========== -->
 <g id="f-happy" class="form">
-  <rect x="16" y="18" width="16" height="11" rx="2" fill="#000" transform="rotate(-10 24 23)"/>
-  <rect x="21" y="20" width="6" height="8" fill="#e8c9a8" transform="rotate(-10 24 23)"/>
-  <rect x="64" y="18" width="16" height="11" rx="2" fill="#000" transform="rotate(10 72 23)"/>
-  <rect x="69" y="20" width="6" height="8" fill="#e8c9a8" transform="rotate(10 72 23)"/>
-  <rect x="18" y="25" width="60" height="13" rx="6" fill="#000"/>
-  <rect x="15" y="36" width="66" height="12" rx="6" fill="#000"/>
-  <rect x="13" y="46" width="70" height="12" rx="6" fill="#000"/>
-  <rect x="17" y="56" width="62" height="11" rx="6" fill="#000"/>
-  <rect x="24" y="65" width="48" height="10" rx="5" fill="#000"/>
-  <path d="M26 48 Q33 41 40 48" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-  <path d="M56 48 Q63 41 70 48" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-  <path d="M38 58 Q48 70 58 58" stroke="#ff6b8a" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <line x1="40" y1="57" x2="56" y2="57" stroke="#ff6b8a" stroke-width="2.4" stroke-linecap="round"/>
-  <line x1="7" y1="44" x2="21" y2="46" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-  <line x1="5" y1="51" x2="20" y2="51" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-  <line x1="89" y1="44" x2="75" y2="46" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-  <line x1="91" y1="51" x2="76" y2="51" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-</g><!-- 难过：垂耳半闭眼 -->
+  <use href="#pixelBody"/>
+  <path d="M-2.2 0.2 Q-1 0.8 0.2 0.2" stroke="#fff" stroke-width="0.4" fill="none" stroke-linecap="round"/>
+  <path d="M5.8 0.2 Q7.0 0.8 8.2 0.2" stroke="#fff" stroke-width="0.4" fill="none" stroke-linecap="round"/>
+  <path d="M0.1 2.2 Q1.5 3.4 2.9 2.2" stroke="#ff7aa2" stroke-width="0.42" fill="none" stroke-linecap="round"/>
+  <line x1="0.2" y1="2.1" x2="2.8" y2="2.1" stroke="#ff7aa2" stroke-width="0.34" stroke-linecap="round"/>
+</g>
+
+<!-- ========== 难过：垂耳 + 半闭眼 + 嘟嘴 ========== -->
 <g id="f-sad" class="form">
-  <rect x="14" y="26" width="19" height="10" rx="2" fill="#000" transform="rotate(22 24 30)"/>
-  <rect x="19" y="28" width="6" height="7" fill="#8b6a4f" transform="rotate(22 24 30)"/>
-  <rect x="63" y="26" width="19" height="10" rx="2" fill="#000" transform="rotate(-22 72 30)"/>
-  <rect x="71" y="28" width="6" height="7" fill="#8b6a4f" transform="rotate(-22 72 30)"/>
-  <rect x="18" y="27" width="60" height="13" rx="6" fill="#000"/>
-  <rect x="15" y="38" width="66" height="12" rx="6" fill="#000"/>
-  <rect x="13" y="48" width="70" height="12" rx="6" fill="#000"/>
-  <rect x="17" y="58" width="62" height="11" rx="6" fill="#000"/>
-  <rect x="24" y="67" width="48" height="10" rx="5" fill="#000"/>
-  <rect x="24" y="43" width="19" height="7" rx="3" fill="#fff" opacity="0.65"/>
-  <rect x="53" y="43" width="19" height="7" rx="3" fill="#fff" opacity="0.65"/>
-  <line x1="33" y1="50" x2="33" y2="44" stroke="#000" stroke-width="2"/>
-  <line x1="63" y1="50" x2="63" y2="44" stroke="#000" stroke-width="2"/>
-  <path d="M43 59 Q48 63 53 59" stroke="#ff6b8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-  <line x1="10" y1="48" x2="23" y2="49" stroke="#ddd" stroke-width="1.4" opacity="0.6"/>
-  <line x1="8" y1="55" x2="22" y2="55" stroke="#ddd" stroke-width="1.4" opacity="0.6"/>
-  <line x1="86" y1="48" x2="73" y2="49" stroke="#ddd" stroke-width="1.4" opacity="0.6"/>
-  <line x1="88" y1="55" x2="74" y2="55" stroke="#ddd" stroke-width="1.4" opacity="0.6"/>
+  <use href="#pixelBody"/>
+  <rect x="-4.8" y="-3.4" width="2.2" height="1.0" rx="0.2" fill="#000" transform="rotate(35 -3.7 -2.9)"/>
+  <rect x="4.6" y="-3.4" width="2.2" height="1.0" rx="0.2" fill="#000" transform="rotate(-35 5.7 -2.9)"/>
+  <rect x="-2.0" y="-0.6" width="3" height="1.4" rx="0.5" fill="#fff" opacity="0.7"/>
+  <rect x="4.0" y="-0.6" width="3" height="1.4" rx="0.5" fill="#fff" opacity="0.7"/>
+  <line x1="-0.5" y1="0.8" x2="-0.5" y2="-0.5" stroke="#000" stroke-width="0.3"/>
+  <line x1="5.5" y1="0.8" x2="5.5" y2="-0.5" stroke="#000" stroke-width="0.3"/>
+  <path d="M0.4 2.3 Q1.5 2.9 2.6 2.3" stroke="#ff7aa2" stroke-width="0.34" fill="none" stroke-linecap="round"/>
 </g>
 
-<!-- 睡觉：闭眼 z z -->
+<!-- ========== 睡觉：闭眼 + 冒 z ========== -->
 <g id="f-sleepy" class="form">
-  <text class="zzz" x="70" y="32" font-size="10" fill="#ddd">z</text>
-  <text class="zzz" x="78" y="24" font-size="7" fill="#bbb">z</text>
-  <text class="zzz" x="84" y="18" font-size="5" fill="#999">z</text>
-  <rect x="16" y="20" width="15" height="11" rx="2" fill="#000" transform="rotate(14 24 25)"/>
-  <rect x="21" y="22" width="6" height="8" fill="#b78e68" transform="rotate(14 24 25)"/>
-  <rect x="65" y="20" width="15" height="11" rx="2" fill="#000" transform="rotate(-14 72 25)"/>
-  <rect x="69" y="22" width="6" height="8" fill="#b78e68" transform="rotate(-14 72 25)"/>
-  <rect x="18" y="28" width="60" height="13" rx="6" fill="#000"/>
-  <rect x="15" y="39" width="66" height="12" rx="6" fill="#000"/>
-  <rect x="13" y="49" width="70" height="12" rx="6" fill="#000"/>
-  <rect x="17" y="59" width="62" height="11" rx="6" fill="#000"/>
-  <rect x="24" y="68" width="48" height="10" rx="5" fill="#000"/>
-  <path d="M25 46 Q34 50 43 46" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-  <path d="M53 46 Q62 50 71 46" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-  <line x1="47" y1="58" x2="49" y2="58" stroke="#ff6b8a" stroke-width="2.4" stroke-linecap="round"/>
+  <use href="#pixelBody"/>
+  <text class="zzz" x="7.5" y="-1.2" font-size="1.5" fill="#ddd">z</text>
+  <text class="zzz" x="8.4" y="-2.4" font-size="1.1" fill="#bbb">z</text>
+  <text class="zzz" x="9.1" y="-3.4" font-size="0.8" fill="#999">z</text>
+  <path d="M-2.2 0.0 L0.2 -0.6 L-2.2 -0.8" stroke="#fff" stroke-width="0.36" fill="none" stroke-linecap="round"/>
+  <path d="M4.2 0.0 L6.8 -0.6 L4.2 -0.8" stroke="#fff" stroke-width="0.36" fill="none" stroke-linecap="round"/>
 </g>
 
-<!-- 困惑：大小眼歪头 -->
+<!-- ========== 困惑：大小眼 + 歪头 ========== -->
 <g id="f-confused" class="form">
-  <rect x="17" y="16" width="15" height="12" rx="2" fill="#000" transform="rotate(-6 24 22)"/>
-  <rect x="22" y="19" width="6" height="9" fill="#e8c9a8" transform="rotate(-6 24 22)"/>
-  <rect x="65" y="14" width="15" height="13" rx="2" fill="#000"/>
-  <rect x="69" y="17" width="6" height="9" fill="#e8c9a8"/>
-  <rect x="18" y="25" width="60" height="13" rx="6" fill="#000"/>
-  <rect x="15" y="36" width="66" height="12" rx="6" fill="#000"/>
-  <rect x="13" y="46" width="70" height="12" rx="6" fill="#000"/>
-  <rect x="17" y="56" width="62" height="11" rx="6" fill="#000"/>
-  <rect x="24" y="65" width="48" height="10" rx="5" fill="#000"/>
-  <rect class="eyewhite" x="24" y="41" width="18" height="9" rx="4" fill="#fff"/>
-  <rect class="pupil" x="30" y="43" width="7" height="5" rx="2" fill="#333"/>
-  <rect class="eyewhite" x="55" y="40" width="13" height="10" rx="4" fill="#fff"/>
-  <rect class="pupil" x="58" y="43" width="7" height="5" rx="2" fill="#333"/>
-  <line x1="45" y1="44" x2="52" y2="52" stroke="#ddd" stroke-width="1.5" opacity="0.5"/>
-  <line x1="47" y1="58" x2="49" y2="58" stroke="#ff6b8a" stroke-width="2.4" stroke-linecap="round"/>
-  <line x1="8" y1="46" x2="22" y2="48" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-  <line x1="88" y1="46" x2="74" y2="48" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-</g><!-- 走路：头 + 两个小细点腿 -->
+  <use href="#pixelBody"/>
+  <rect x="-2.4" y="-1.1" width="2.6" height="2.4" rx="0.4" fill="#fff"/>
+  <rect x="-1.7" y="-0.4" width="1.0" height="1.0" fill="#333"/>
+  <rect x="4.2" y="-1.1" width="2.0" height="2.6" rx="0.4" fill="#fff"/>
+  <rect x="4.7" y="-0.4" width="1.0" height="1.0" fill="#333"/>
+  <line x1="-5.8" y1="-0.6" x2="-4.6" y2="0.6" stroke="#ddd" stroke-width="0.24" opacity="0.5"/>
+  <line x1="0.8" y1="2.0" x2="1.4" y2="2.0" stroke="#ff8fb3" stroke-width="0.32" stroke-linecap="round"/>
+</g>
+
+<!-- ========== 走路：像素猫 + 两个圆点点腿 ========== -->
 <g id="f-walk" class="form">
-  <rect x="16" y="16" width="15" height="12" rx="2" fill="#000"/>
-  <rect x="21" y="19" width="6" height="9" fill="#e8c9a8"/>
-  <rect x="65" y="16" width="15" height="12" rx="2" fill="#000"/>
-  <rect x="69" y="19" width="6" height="9" fill="#e8c9a8"/>
-  <rect x="18" y="27" width="60" height="13" rx="6" fill="#000"/>
-  <rect x="15" y="38" width="66" height="12" rx="6" fill="#000"/>
-  <rect x="13" y="48" width="70" height="12" rx="6" fill="#000"/>
-  <rect x="17" y="58" width="62" height="11" rx="6" fill="#000"/>
-  <rect x="22" y="67" width="52" height="10" rx="5" fill="#000"/>
-  <g class="eye"><rect class="eyewhite" x="24" y="42" width="19" height="8" rx="4" fill="#fff"/><rect class="pupil" x="30" y="44" width="7" height="4" rx="2" fill="#333"/></g>
-  <g class="eye"><rect class="eyewhite" x="53" y="42" width="19" height="8" rx="4" fill="#fff"/><rect class="pupil" x="59" y="44" width="7" height="4" rx="2" fill="#333"/></g>
-  <line x1="44" y1="59" x2="52" y2="59" stroke="#ff6b8a" stroke-width="2.4" stroke-linecap="round"/>
-  <rect class="leg-l" x="30" y="77" width="4" height="15" rx="2" fill="#000"/>
-  <rect class="leg-r" x="62" y="77" width="4" height="15" rx="2" fill="#000"/>
-  <line x1="8" y1="46" x2="21" y2="48" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
-  <line x1="88" y1="46" x2="75" y2="48" stroke="#ddd" stroke-width="1.4" opacity="0.7"/>
+  <use href="#pixelBody"/>
+  <g class="eyeL"><rect class="eyewhite" x="-2.0" y="-1" width="3" height="3" fill="#fff"/><rect class="pupil" x="-1.2" y="-0.2" width="1.2" height="1.2" fill="#333"/></g>
+  <g class="eyeR"><rect class="eyewhite" x="4.0" y="-1" width="3" height="3" fill="#fff"/><rect class="pupil" x="4.8" y="-0.2" width="1.2" height="1.2" fill="#333"/></g>
+  <line x1="-0.2" y1="1.6" x2="0.8" y2="1.6" stroke="#ff8fb3" stroke-width="0.32" stroke-linecap="round"/>
+  <circle class="leg-l" cx="-2.0" cy="11.6" r="0.7" fill="#000"/>
+  <circle class="leg-r" cx="3.2" cy="11.6" r="0.7" fill="#000"/>
 </g>
 </svg>
 </div>
@@ -199,17 +181,17 @@ body.form-confused #f-confused { animation: confusedTilt 1.1s ease-in-out infini
   var bubbleTimer;
   var lastInteraction = Date.now();
   var phrases = {
-    tap: ['嗯？', '戳我干嘛', '哼', '干嘛啦', '你戳到我了', '喵？'],
-    doubleTap: ['呀！', '别戳了！', '好痒', '住手！'],
-    longPress: ['...放手', '好重', '喘不过气了', '压扁了'],
-    screenshot: ['在偷拍我？', '合照！', '耶~', '咔嚓'],
+    tap: ['嗯？','戳我干嘛','哼','干嘛啦','喵？','痒~'],
+    doubleTap: ['呀！','别戳了！','好痒','住手！'],
+    longPress: ['...放手','好重','压扁了','喘不过气了'],
+    screenshot: ['在偷拍我？','合照！','耶~','咔嚓'],
     app: {
       'com.ss.android.ugc.aweme': '又在刷抖音',
       'com.tencent.mm': '回消息去',
       'com.deepseek.chat': '...你在跟谁聊天',
       'com.ai.assistance.operit': ''
     },
-    idle: ['好无聊', '理我一下', '…', 'zzz', '发呆中']
+    idle: ['好无聊','理我一下','…','zzz','发呆中']
   };
   function setForm(mode) {
     var valid = ['normal','walk','angry','happy','sad','sleepy','confused'];
@@ -231,6 +213,19 @@ body.form-confused #f-confused { animation: confusedTilt 1.1s ease-in-out infini
   window.petEngine = {
     onStartWalking: function() { setForm('walk'); },
     onStopWalking: function() { setForm('normal'); },
+    // 走回屏幕中间后：蹦跳两三下 + 生气但可爱的表情
+    onReturnedHome: function() {
+      setForm('angry');
+      showBubble('哼！别把我甩那么远', 'red');
+      pet.style.transform = 'translateY(0)';
+      var i = 0;
+      var hop = setInterval(function() {
+        i++;
+        pet.style.transform = 'translateY(-18px) rotate(' + (i % 2 ? -8 : 8) + 'deg)';
+        setTimeout(function() { pet.style.transform = 'translateY(0)'; }, 120);
+        if (i >= 4) { clearInterval(hop); pet.style.transform = ''; setForm('normal'); }
+      }, 180);
+    },
     onTap: function() {
       lastInteraction = Date.now();
       showBubble(randomPick(phrases.tap));
